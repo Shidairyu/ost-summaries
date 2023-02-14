@@ -1,0 +1,149 @@
+% Nullable Reference Types: zwar prüfungsrelevant, aber nur einfache Codierungsaufgaben
+
+\section{Nullability \& Records}
+
+\begin{multicols*}{2}
+\subsection{Nullability Value Types}
+\subsubsection{Nullable struct}
+\begin{lstlisting}
+public struct Nullable<T> 
+    where T : struct
+{   
+    public Nullable(T value);
+
+    public bool HasValue { get; }
+    public T Value { get; }
+}
+\end{lstlisting}
+\begin{tabular}{| c | c | c |}
+\hline
+Status & HasValue & Value\\ \hline\hline
+null & false & ? \\ \hline
+not null & true & T\\
+\hline
+\end{tabular}
+\vspace*{2mm}
+\begin{itemize}
+    \item HasValue ist true: Liefert den Wert
+    \item HasValue ist false: System.InvalidOperationException
+\end{itemize}
+\subsubsection*{T? Syntax}
+Reines Compiler-Feature, Verbessert die Lesbarkeit, Direkte Zuweisung von null möglich.
+\begin{lstlisting}
+int? x = 123; 
+int? y = null;
+
+// Compiler-Output
+System.Nullable<int> x = new System.Nullable<int>(123);
+System.Nullable<int> y = new System.Nullable<int>();
+\end{lstlisting}
+\fat{Sicheres Lesen:}
+\begin{lstlisting}
+// Klassisch
+int x1 = x.HasValue 
+    ? x.Value
+    : default;
+
+// Via Methode
+int x2 = x.GetValueOrDefault();
+
+// Via Methode inkl. eigenem Default
+int x3 = x.GetValueOrDefault(-1);
+\end{lstlisting}
+
+\subsection{Nullability Reference Types}
+Variable kann mit ? annotiert werden: 
+\begin{lstlisting}
+string s1; // Non-nullable
+string? s2; // Nullable
+\end{lstlisting}
+Null-forgiving Operator ! übersteuert den null-state explizit:
+\begin{lstlisting}
+string s3 = null!;
+\end{lstlisting}
+Extrem gefährlich, nur mit Bedacht einsetzen. Compile Time ≠ Runtime (inkonsistent)
+
+\subsection{Operatoren}
+\subsubsection{is null / is not null}
+\begin{lstlisting}
+int? x = null; 
+string s = null;
+
+bool b1a = x is null;
+bool b1b = x is not null;
+bool b2a = s is null;
+bool b2b = s is not null;
+
+// Compiler-Output
+bool b1a = x.HasValue; bool b1b = !x.HasValue;
+bool b2a = object.ReferenceEquals(x, null);
+bool b2b = !object.ReferenceEquals(x, null);
+\end{lstlisting}
+\subsubsection{null-coalescing}
+Gibt den linken Teil zurück, sofern nicht null, Anstelle von -1 könnte auch eine throw Anweisung stehen.
+\begin{lstlisting}
+int? x = null;
+int i = x ?? -1;
+
+// Compiler-Output (vereinfacht)
+int i = x is not null
+    ? x.GetValueOrDefault()
+    : -1;  
+\end{lstlisting}
+\subsubsection{null-coalescing assignment}
+Gibt den linken Teil zurück, sofern nicht null.
+\begin{lstlisting}
+int? x = null;
+i ??= -1;
+
+// Compiler-Output (vereinfacht)
+if (i is null)
+{
+    i = -1; 
+}
+\end{lstlisting}
+\subsubsection{null-conditional}
+Führt den rechten Teil aus, sofern der linke Teil nicht null ist. Andernfalls wird ein Default-Wert geliefert.
+\begin{lstlisting}
+object o = null; 
+Action a = null;
+
+string s = o?.ToString();
+a?.Invoke();
+
+// Compiler-Output
+string s = o is not null
+    ? o.ToString()
+    : default;
+if (a is not null)
+{
+    a(); 
+}
+\end{lstlisting}
+
+\subsection{Record Types}
+Reine Datenrepräsentations-Klassen. Record Types sollten immutable sein. Automatisch generierte Members:
+\begin{itemize}
+    \item Konstruktor
+    \item Properties (init only setter)
+    \item Value equality
+    \item Darstellung (ToString-Methode, etc.)
+    \item Vererbung wird berücksichtigt (z.B. bei Equality)
+    \item Bei Vererbung: Base muss Record sein
+\end{itemize}
+\begin{lstlisting}
+public record [class|struct] Person( int Id, string Name);
+
+public abstract record Person(int Id); public record SpecialPerson(
+    int Id,
+    string Name) : Person(Id);
+\end{lstlisting}
+Vereinfacht das erzeugen bon Kopien
+\begin{lstlisting}
+Person p1 = new(0, "Mary");
+Person p2 = p1 with { Id = 1 };
+bool eq2 = p1 == p2; // false
+Person p3 = p1 with { };
+bool eq3 = p1 == p3; // true
+\end{lstlisting}
+\end{multicols*}

@@ -1,0 +1,159 @@
+\documentclass[a4paper, oneside, 10pt]{scrartcl}
+
+% use language german
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english, ngerman]{babel} % comment out to switch to english
+\usepackage{lmodern} % use modern latin fonts
+
+% format page
+\usepackage{geometry}
+\geometry{top=2cm,left=.5cm,right=.5cm, bottom=2cm}
+
+\usepackage{multicol}
+\setlength{\columnseprule}{.5pt}
+
+\usepackage{enumitem}
+
+% graphic
+\usepackage{graphicx}
+\graphicspath{{images/}}
+
+% colors
+\usepackage{xcolor}
+
+% compact items
+\setlist{topsep=0pt, leftmargin=4mm, nolistsep}
+\setlength{\parindent}{0cm}
+
+% define header and footer portrait
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\setkomafont{pagehead}{\normalfont}
+\setkomafont{pagefoot}{\normalfont}
+\fancyhf{}
+\fancyhead[LO]{\nouppercase\leftmark}
+\fancyhead[RO]{Dario Berther}
+\fancyfoot[CO]{Seite \thepage}
+\renewcommand{\headrulewidth}{.5pt}
+\renewcommand{\footrulewidth}{.5pt}
+
+% define header and footer landscape
+\fancypagestyle{lscape}{%
+\fancyhf{} % clear all header and footer fields
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+}
+
+% new section -> new page
+\let\stdsection\section
+\renewcommand\section{\clearpage\stdsection}
+
+%no indentation
+\setlength{\parindent}{0cm}
+
+% Code Listings
+\usepackage{color}
+\usepackage{cascadia-code}
+\usepackage{listings}
+
+%Color scheme in Visual Studio darkmode
+\definecolor{black}{cmyk}{0,0,0,1}             
+\definecolor{white}{cmyk}{0,0,0,0}
+\definecolor{darkgrey}{cmyk}{0,0,0,0.97}      %background in Visual Studio
+\definecolor{green}{cmyk}{0.6,0,0.84,0}       %comments in Visual Studio
+\definecolor{blue}{cmyk}{0.65,0.33,0,0.05}       %keywords in Visual Studio
+\definecolor{rose}{cmyk}{0,0.26,0.38,0}       %strings in Visual Studio
+\definecolor{lavender}{cmyk}{0,0.42,0,0.1}   %if/else,switch/case etc. in Visual Studio
+\definecolor{lightblue}{HTML}{9BDBFE}     %local variables in Visual Studio
+\definecolor{aqua}{HTML}{4EC9B0}       %class types in Visual Studio
+\definecolor{lightgreen}{HTML}{D9D9A6} %enumerations and methods in Visual Studio
+
+\lstset{
+language=[Sharp]C,
+rulesep=1pt,
+xleftmargin=1pt,
+framexleftmargin=0pt,
+framexrightmargin=0pt,
+showtabs=false,
+showspaces=false,
+showstringspaces=true,
+breaklines=true,
+breakatwhitespace=true,
+backgroundcolor=\color{white},
+rulecolor=\color{darkgrey},
+commentstyle=\color{green},
+morecomment=[s][\color{green}]{/*+}{*/},
+morecomment=[s][\color{green}]{/*-}{*/},
+basicstyle=\ttfamily\footnotesize\color{black},
+stringstyle=\color{rose},
+frame=trbl,
+framesep=2pt,
+numbersep=7pt,
+belowcaptionskip=1\baselineskip,
+moredelim=[is][\sout]{|&}{&|},
+%**********************
+%ADD YOUR KEYWORDS HERE
+%**********************
+%-------------------------------------------
+%keywords like string, int, false, true ...
+keywordstyle=\color{blue},
+morekeywords={partial, var, value, get, set, async, from, where, orderby, select, when, join, on, equals, group, by, into, nameof, 
+IsUnique, int32, message, repeated, reserved, service, rpc, returns, await, stream, with},
+%-------------------------------------------
+%keywords like if/else, switch/cas ...
+emphstyle=\color{lavender},
+emph={if, else, return, throw, switch, case, yield},
+%-------------------------------------------
+%Collection of your local and global variables
+emphstyle={[2]\color{lightblue}},
+emph={[2]someLocalVariable, Datetime, T, T1, T2, TKey, TValue, TElement, TPriority, id, order, },
+%-------------------------------------------
+%Collection of your class types
+emphstyle={[3]\color{aqua}},
+emph={[3]DateTime, MyClass, Base, Sub, SubSub, Examples, ISequence, List, EventHandler, Sequence, Notifier, Console, Delegate, 
+MyList, MyIntList, MyIntKeyDict, Dictionary, MyDict, MyList2, Exception, MethodBase, ISerializable, _Exception, FileMode,
+FileStream, FileNotFoundException, IOException, IEnumerable, IEnumerator, MyEnumerator, MyIntEnumerator, IDisposable,
+ExtensionMethods, Predicate, Task, Math, DayOfWeek, ExamplesStaticUsing, ModelBuilder, DbSet, ShopContext, DbContext, Category,
+MaxLength, AuditEntry, Metadata, Product, ICollection, NotMapped, Key, Required, Unicode, Index, CategoryTypeConfig, IEntityTypeConfiguration,
+EntityTypeBuilder, MyHelper, SearchRequest, SearchResponse, Query, LogicalOperator, Search, CustomerService, OrderService,
+GetCustomers, GetCustomer, GetOrders, GetCustomersResponse, GetCustomerResponse, CustomerResponse, GetOrdersResponse, 
+GetCustomerRequest, OrderResponse, Gender, GetOrdersRequest, Person },
+%-------------------------------------------
+%Collection of your methods
+emphstyle={[4]\color{lightgreen}},
+emph={[4]ToLower, Run, ContinueWith, Wait, WriteLine, Sqrt, Test, GetOrdersAsync, GetSomeCustomerIdAsync, OnModelCreating, Configure,
+DoSomethingWithIt, GetCustomerAsync, GetCustomersAsync},
+}
+
+%define section color and size
+\addtokomafont{section}{\color{sectioncolor}}
+\addtokomafont{subsection}{\color{subsectioncolor}}
+\addtokomafont{subsubsection}{\small \color{subsubsectioncolor}}
+
+%define color
+\definecolor{sectioncolor}{RGB}{0, 0, 0}
+\definecolor{subsectioncolor}{RGB}{0, 0, 0}
+\definecolor{subsubsectioncolor}{RGB}{0, 0, 0}
+
+\usepackage[explicit]{titlesec}
+\titlespacing{\section}{0mm}{2mm}{0.5mm}
+\titlespacing{\subsection}{0mm}{2mm}{0.5mm}
+\titlespacing{\subsubsection}{0mm}{2mm}{0.5mm}
+
+\titleformat{\section}{\normalfont\large\bfseries}{}{0mm}{\sectioncolor{\thesection~#1}}
+\titleformat{\subsection}{\normalfont\large\bfseries}{}{0mm}{\subsectioncolor{\thesubsection~#1}}
+\titleformat{\subsubsection}{\bfseries}{}{0mm}{\subsubsectioncolor{\thesubsubsection~#1}}
+
+\newcommand{\sectioncolor}[1]{\colorbox{black!40}{\parbox{.98\linewidth}{\color{black}#1}}}
+\newcommand{\subsectioncolor}[1]{\colorbox{black!20}{\parbox{.97\linewidth}{\color{black}#1}}}
+\newcommand{\subsubsectioncolor}[1]{\colorbox{black!10}{\parbox{0.97\linewidth}{\color{black}#1}}}
+
+% new section -> new page
+\let\stdsection\section
+\renewcommand\section{\clearpage\stdsection}
+
+\usepackage{ulem}
+
+\newcommand{\nfat}[1]{\newline\small\textbf{#1}\normalsize}
+\newcommand{\fat}[1]{\small\textbf{#1}\normalsize}

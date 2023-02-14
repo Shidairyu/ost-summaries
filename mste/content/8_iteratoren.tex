@@ -1,0 +1,293 @@
+\section{Iteratoren}
+
+\begin{multicols*}{2}
+\subsection{foreach-Loop}
+\begin{lstlisting}
+//Syntax
+foreach (ElementType elem in collection) { statement }
+
+//Beispiel
+int[] list = { 1, 2, 3, 4, 5, 6 };
+
+foreach (int i in list)
+{
+    if(i == 3) continue; //Unterbricht aktuelle Iteration
+    if(i == 5) break; //Unterbricht gesamten Loop
+    Console.WriteLine(i);
+}
+\end{lstlisting}
+\subsubsection{Kriterien für collection}
+\begin{itemize}
+    \item Muss IEnumerable / IEnumerable<T> implementieren
+    \item Muss einer Implementation von IEnumerable / IEnumerable<T> \dq ähneln\dq:
+    \begin{itemize}
+        \item collection hat Methode GetEnumerator() mit Rückgabewert e
+        \item e hat eine Methode MoveNext() mit Rückgabewert bool
+        \item e hat ein Property Current
+    \end{itemize}
+\end{itemize}
+
+\subsection{Iteratoren}
+\subsubsection{Interfaces}
+\begin{lstlisting}
+//Non-generisch
+public interface IEnumerable
+{
+    IEnumerator GetEnumerator();
+}
+
+public interface IEnumerator
+{
+    object Current { get; }
+    bool MoveNext();
+    void Reset();
+}
+
+//Generisch
+public interface IEnumerable<out T>
+    : IEnumerable
+{
+    IEnumerator<T> GetEnumerator();
+}
+
+public interface IEnumerator<out T> 
+    : IDisposable, IEnumerator
+{
+    T Current { get; }
+    //weitere Members werden vererbt
+}
+\end{lstlisting}
+\subsubsection{Zugriff}
+\begin{itemize}
+    \item Mehrere aktive Iteratoren zur gleichen Zeit erlaubt
+    \item Enumerator-Objekt muss Zustand vollständig kapseln, ansonsten Seiteneffekte
+    \item Collection darf dementsprechend während Iteration nicht verändert werden
+\end{itemize}
+\subsubsection{Implementation}
+Relativ aufwändig zu implementieren.
+\fat{Non-Generisch:}
+\begin{lstlisting}
+class MyList : IEnumerable {
+    public IEnumerator GetEnumerator()
+    { return new MyEnumerator(); }
+
+    class MyEnumerator : IEnumerator
+    {
+        public object Current
+        { get { /* ... */ } }
+        public bool MoveNext() { /* ... */ }
+        public void Reset() { /* ... */ }
+    }
+}   
+
+//Anwendung
+MyList c = new();
+foreach (object elem in c)
+{
+    /* ... */
+}
+\end{lstlisting}
+\fat{Generisch:}
+\begin{lstlisting}
+class MyIntList : IEnumerable<int> {
+    public IEnumerator<int> GetEnumerator()
+    { return new MyIntEnumerator(); }
+    
+    //Muss auch implementiert werden, da IEnumerable<int> von IEnumerable ableitet
+    IEnumerator IEnumerable.GetEnumerator() 
+    { return GetEnumerator(); }
+    
+    class MyIntEnumerator : IEnumerator<int>
+    {   
+        public int Current
+        { get { /* ... */ } }
+        object IEnumerator.Current
+        { get { /* ... */ } }
+
+        public bool MoveNext() { /* ... */ }
+        public void Reset() { /* ... */ }
+        public void Dispose() { /* ... */ }
+    } 
+}
+
+//Anwendung
+MyIntList c = new();
+foreach (int elem in c)
+{
+    /* ... */
+}
+\end{lstlisting}
+\subsubsection{Vereinfachung durch Iterator-Methoden}
+\fat{Signatur:}
+\begin{itemize}
+    \item public IEnumerator GetEnumerator()
+    \item public IEnumerator<T> GetEnumerator()
+    \item Beinhaltet mindestens ein yield return Statement
+\end{itemize}
+\begin{lstlisting}
+class MyIntList 
+{
+    public IEnumerator<int> GetEnumerator()
+    {
+        yield return 1;
+        yield return 3;
+        yield break;
+        yield return 6;
+    }
+}
+
+//Anwendung
+MyIntList c = new();
+foreach (int elem in c)
+{
+    /* ... */
+}
+
+\end{lstlisting}
+\fat{yield return:\\}
+Gibt den nächsten Wert für die nächste Iteration eines foreach Loops zurück.
+\begin{lstlisting}
+yield return expr;  
+yield break; //Terminiert Iteration  
+\end{lstlisting}
+Typ von expr:
+\begin{itemize}
+    \item T: wenn IEnumerator<T>
+    \item object: wenn IEnumerator
+\end{itemize}
+\subsection{Spezifische Iteratoren}
+\begin{lstlisting}
+class MyIntList 
+{
+    private int[] _x = new int[10];
+    
+    //Standard Iterator
+    public IEnumerator<int> GetEnumerator() 
+    {
+        for (int i = 0; i < _x.Length; i++)
+            yield return _x[i];
+    }
+    
+    //Spezifische Iterator-Methode
+    //Rückgabewert ist IEnumerable<T> nicht IEnumerator<T>
+    public IEnumerable<int> Range(int from, int to) 
+    { 
+        for (int i = from; i < to; i++)
+            yield return _x[i];
+    }
+    
+    //Spezifisches Iterator-Property
+    //Rückgabewert ist IEnumerable<T> nicht IEnumerator<T>
+    public IEnumerable<int> Reverse 
+    {
+        get {
+            for (int i = _x.Length - 1; i >= 0; i--)
+                yield return _x[i];
+        } 
+    }
+}
+
+MyIntList list = new();
+
+//Anwendung Range
+foreach (int elem in list.Range(2, 7))
+{
+    /* ... */
+}
+
+//Anwendung Reverse
+foreach (int elem in list.Reverse)
+{
+    /* ... */
+}
+\end{lstlisting}
+
+\subsection{Extension Methods}
+\begin{itemize}
+    \item Erlaubt das Erweitern bestehender Klassen (aus Anwendersicht)
+    \item Signatur der Klasse wird nicht verändert
+    \item Aufruf sieht jedoch so aus, als wäre es eine Methode auf der Klasse
+\end{itemize}
+\fat{Regeln:}
+\begin{itemize}
+    \item Kein Zugriff auf interne Members aus Extension Methode
+    \item ToStringSafe ist nur sichtbar, wenn der Namespace von ExtensionMethods importiert wurde
+    \item Bei Konflikt mit Methode auf der Zielklasse gewinnt immer die der Zielklasse
+    \item Erlaubt auf Klassen / Structs / Interfaces / Delegates / Enumeratoren / Arrays
+\end{itemize}
+\subsubsection{Deklaration}
+\begin{itemize}
+    \item Muss in statischer Klasse deklariert sein
+    \item Muss static sein
+    \item Erster Parameter: this Schlüsselwort und Angabe auf welcher Klasse die Methode verwendbar ist
+\end{itemize}
+\begin{lstlisting}
+using Extensions;
+
+public static class ExtensionMethods 
+{
+    static string ToStringSafe(this object obj) 
+    {
+        return obj == null
+            ? string.Empty : obj.ToString();
+    }
+}
+\end{lstlisting}
+
+\subsection{Deferred Evaluation (Lazy-Loading)}
+Aufruf von GetEnumerator() oder von Range(...) führt Iterator-Methode noch NICHT aus, 
+erst der Aufruf von IEnumerator<T>.MoveNext().\\
+Dies passiert implizit im foreach Loop
+\begin{lstlisting}
+IEnumerator enumerator = list .GetEnumerator();
+
+try
+{
+    while (enumerator.MoveNext()) {
+        int i = (int)enumerator.Current;
+        /* ... */
+    } 
+}
+finally { /* ... */ }   
+\end{lstlisting}
+\subsubsection{Extension Methods und Iteratoren}
+Erweitern der IEnumerable Interfaces um Query Operatoren über Extension Methods.
+\begin{itemize}
+    \item Jede Collection welche IEnumerable implementiert kann auf diese Operatoren zugreifen
+    \item Liefern in der Regel wieder ein IEnumerable
+    \item Können mit dem \dq.\dq-Operator verkettet werden
+    \item Werden deferred evaluiert
+\end{itemize}
+\begin{lstlisting}
+static class OstExtensions {
+    public static IEnumerable<T> OstWhere<T>(
+        this IEnumerable<T> source,
+        Predicate<T> predicate)
+    {
+        foreach (T item in source) {
+            if (predicate(item))
+                yield return item;
+        } 
+    }
+
+    public static IEnumerable<T> OstOfType<T>(
+        this IEnumerable source)
+    {
+        foreach (object item in source)
+        {
+            if (item is T)
+                yield return (T)item;
+        } 
+    }
+}
+//Verwendung
+object[] list = { 4, 3.5, "abc", 3, 6 };
+IEnumerable<int> res = list
+    .OstOfType<int>()
+    .OstWhere(k => k % 2 == 0);
+
+foreach (int i in res) { Console.WriteLine(i); }
+\end{lstlisting}
+
+
+\end{multicols*}

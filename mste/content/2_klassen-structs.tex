@@ -1,0 +1,473 @@
+% Ohne Operatoren
+
+\section{Klassen \& Structs}
+\begin{multicols*}{2}
+\subsection{Klassen}
+\begin{itemize}
+    \item ReferenceType
+    \item Ableiten von Basisklasse möglich
+    \item Verwendung als Basisklasse möglich
+    \item Implementieren von Interfaces möglich
+    \item Konstruktoren: Parameter optional
+    \item Felder: Initialisierung erlaubt
+\end{itemize}
+\subsubsection{Statisch}
+\fat{Regeln:}
+\begin{itemize}
+    \item Nur statische Members erlaubt
+    \item Kann nicht instanziert werden
+    \item Sind sealed
+\end{itemize}
+\fat{Zweck:}
+\begin{itemize}
+    \item Sammlung an Standard-Werte. Beispiel: MyMath.Pi
+    \item Sammlung an Funktionalität Beispiel: MyMath.Sin(...)
+    \item Definition von Erweiterungsmethoden
+\end{itemize}
+\subsubsection{Nested Types}
+Für Hilfsklassen innerhalb einer anderen Klasse gedacht.
+\nfat{Regeln:}
+\begin{itemize}
+    \item Äussere hat Zugriff auf public members der Inneren
+    \item Innere hat Zugriff auf alles der Äusseren
+    \item Fremde Klassen erhalten Zugriff auf innere Klasse, wenn diese public ist
+    \item Erlaubte Nested Types sind: Klassen, Interfaces, Structs, Enums, Delegates
+\end{itemize}
+
+\subsection{Structs}
+\begin{itemize}
+    \item ValueType: Auf Stack oder in-line in Objekt auf Heap
+    \item Ableiten von Basisklasse nicht möglich
+    \item Verwendung als Basisklasse nicht möglich
+    \item Implementieren von Interfaces möglich
+    \item Konstruktoren: mind. 1 Parameter
+    \item Felder: Initialisierung nicht erlaubt
+\end{itemize}
+\fat{Verwendung nur wenn folgende Umstände:} 
+\begin{itemize}
+    \item Repräsentiert einen einzelnen Wert
+    \item Instanzgrösse ist kleiner als 16 Byte (128 Bit)
+    \item Ist \dq immutable\dq
+    \item Wird nicht häufig geboxt
+    \item Entweder kurzlebig oder wird in andere Objekte eingebettet
+\end{itemize}
+
+\subsection{Instanzierung}
+Erzeugt aus einer Klasse ein Objekt.
+\begin{lstlisting}
+Stack s = new Stack(10); //Klassisch
+Stack s = new(10); //Target-typed new expressions (C\#10)
+\end{lstlisting}
+
+\subsection{Felder}
+\fat{Feld:}
+\begin{itemize}
+    \item Initialisierung in Deklaration optional
+    \item In Deklarationsreihenfolge initialisiert
+    \item Initialisierung darf nicht auf Felder und Methoden zugreifen
+\end{itemize}
+\fat{Konstante:}
+\begin{itemize}
+    \item Muss Initialisierungswert haben
+    \item Wert muss zur Compilezeit berechenbar sein
+\end{itemize}
+\fat{Readonly:}
+\begin{itemize}
+    \item In Deklaration oder Konstruktor initialisiert
+    \item Muss nicht zur Compilezeit berechenbar sein
+    \item Wert darf später nicht mehr geändert werden
+\end{itemize}
+\begin{lstlisting}
+int _value = 0;
+const long Size = int.MaxValue / 3 + 1234;
+readonly DateTime _date1 = DateTime.Now; 
+readonly DateTime _date2;
+\end{lstlisting}
+
+
+\subsection{Methoden}
+\subsubsection{Parameter}
+\fat{Value-Parameter(call by value):} Kopie des Stack-Inhaltes wird übergeben
+\nfat{ref-Parameter(call by reference):} 
+\begin{itemize}
+    \item Adresse der Variable wird übergeben
+    \item Variable muss initialisiert sein
+    \item Es muss eine Variable übergeben werden
+\end{itemize}
+\fat{out-Parameter:}
+\begin{lstlisting}
+void Init(out int a, out int b) { a = 1; b = 2; }
+
+// Bisher
+int a, b;
+Init(out a, out b); // a == 1 / b == 2
+
+// C# 7.0 regulär
+Init(out int a1, out int b1);
+Console.WriteLine($"{a1} / {b1}");
+
+// C# 7.0 Parameter ignoriert
+Init(out int a2, out _); Console.WriteLine($"{a1}");
+
+// Praxisbeispiel
+bool success1 = int.TryParse("123a", out int i1);
+bool success2 = int.TryParse("123a", out _);
+\end{lstlisting} 
+\fat{params-Array:}
+\begin{itemize}
+    \item Erlaubt beliebig viele Parameter (0-n)
+    \item Muss am Schluss der Deklaration stehen
+    \item Nur ein params-Array erlaubt
+    \item params darf nicht mit ref / out kombiniert werden
+\end{itemize}
+\begin{lstlisting}
+void Sum(out int sum, params int[] values) {
+    sum = 0;
+    foreach (int i in values) sum += i;
+}
+\end{lstlisting}
+\fat{Optional:}
+\begin{lstlisting}
+private void Sort( 
+int[] array, //Erforderlich
+int from = 0, //Optional
+int to = -1, //Optional
+bool ascending = true,  //Optional
+bool ignoreCase = false //Optional
+){}
+\end{lstlisting}
+\fat{Named:}
+\begin{lstlisting}
+int[] a = { 3, 5, 2, 6, 8, 4 };
+Sort(a, ascending: false);
+Sort(a, ignoreCase: true, from: 3);
+Sort(a, ignoreCase: true, ascending: false,
+to: 2, from: 3);
+Sort(a, ignoreCase: true, ascending: false,
+from: 2, to: 3); Sort(ignoreCase: true, ascending: false,
+from: 2, to: 3, array: a);
+\end{lstlisting}
+\subsubsection{Überladung}
+Mehrere Methoden mit dem gleichen Namen.
+\begin{itemize}
+    \item Unterschiedliche Anzahl Parameter
+    \item Unterschiedliche Parametertypen oder
+    \item Unterschiedliche Parameterarten (ref / out)
+    \item Der Rückgabetyp spielt bei der Unterscheidung keine Rolle
+    \item Default Parameter kein Unterscheidungsmerkmal
+    \item Methoden ohne optionale Parameter haben Vorrang
+\end{itemize}
+
+\subsection{Properties}
+\fat{Regeln:}
+\begin{itemize}
+    \item Read- und/oder Write-Only möglich (get oder set weglassen)
+    \item Schlüsselwort value für Zugriff auf Wert in Setter
+    \item Sichtbarkeiten von Getter / Setter können verändert werden
+\end{itemize}
+\begin{lstlisting}
+// Backing-Field
+private int _length;
+
+// Property
+public int Length 
+{
+    get { return _length; }
+    set { _length = value; }
+}
+
+// Read-only Property
+public int LengthReadOnly
+{
+    get { return _length; }
+}
+
+// Write-only Property
+public int LengthWriteOnly
+{
+    set { _length = value; }
+}
+
+// Private-Set Property
+public int LengthPrivateSet
+{
+    get { return _length; }
+    private set { _length = value; }
+}
+
+// Auto Property, Getter/Setter beide zwingend
+public int LengthAuto { get; set; }
+
+// Auto Property initialized, set darf weggelassen werden
+public int LengthInit { get; } = 5;
+\end{lstlisting}
+\subsubsection{Objekt-Initialisierung}
+\label{sec:object_initialisation}
+Properties können direkt initialisiert werden:
+\begin{lstlisting}
+MyClass mc = new()
+{
+    Length = 1,
+    Width = 2 
+};
+\end{lstlisting}
+\fat{Init-Only setter:} Property muss während Initialisierung gesetzt werden:
+\begin{itemize}
+    \item Im Konstruktor des umschliessenden Typs
+    \item Object Initialisierung
+    \item with-Initializer (siehe Record Types)
+    \item Indirekt über anderes init-only Property
+\end{itemize}
+\begin{lstlisting}
+// Init-only setter
+public int LenthInitOnly { get; init; }
+// Anwendungsbeispiel
+MyClass mc = new()
+{
+    LenthInitOnly = 1 
+};
+\end{lstlisting}
+
+\subsubsection{Expression-Bodied Members}
+\begin{lstlisting}
+public class Examples { 
+    private int _value;
+    
+    // Constructors / Destructors (C# 7.0)
+    public Examples(int v) => _value = v;
+    ~Examples() => _value = 0;
+    
+    // Methods (C# 6.0)
+    public int Sum(int x, int y) => x + y; 
+    public int GetZero() => 0;
+    public void Print() => Console.WriteLine("...");
+    
+    // Properties (C# 6.0)
+    public int Zero => 0;
+    public int Bla => Sum(Zero, 2);
+    
+    // Getters/Setters (C# 7.0)
+    public int Value 
+    { 
+        get => _value;
+        set => _value = value;
+    }
+}
+\end{lstlisting}
+
+\subsubsection{Indexer}
+Überladen des Index-Operators.
+\begin{itemize}
+    \item Read- und/oder Write-Only möglich
+    \item Schlüsselwort this definiert den Indexer
+\end{itemize}
+\begin{lstlisting}
+class MyClass {
+    private string[] _arr = new string[10];
+    // int-Indexer
+    public string this[int index]
+    {
+        get { return _arr[index]; }
+        set { _arr[index] = value; }
+    }
+    // string-Indexer
+    public int this[string search]
+    {   
+        get {
+            for(int i = 0; i < _arr.Length; i++) 
+            { 
+                if(_arr[i] == search) return i; 
+            } 
+            return -1;
+        } 
+    }
+    // 2-Dimensionaler Indexer
+    public string this[int i1, int i2]
+    { 
+        /* ... */ 
+    } 
+}
+\end{lstlisting}
+
+\subsection{Konstruktoren}
+\begin{itemize}
+    \item Aufruf anderer Konstruktoren möglich: this
+    \item Aufruf auf Basis-Klassen-Konstruktor: base
+\end{itemize}
+\begin{lstlisting}
+class MyClass {
+    private int _x, _y;
+    
+    public MyClass() : this(0, 0) { } //Default
+    public MyClass(int x) : this(x, 0) { }
+    public MyClass(int x, int y)
+    {
+        _y = y; 
+        _x = x;
+    } 
+}
+\end{lstlisting}
+\subsubsection{Default}
+Keine Parameter
+\begin{multicols*}{2}
+    \fat{Klasse}
+    \begin{itemize}
+        \item Automatisch generiert wenn nicht vorhanden
+        \item Wird nicht generiert, wenn anderer Konstruktor vorhanden
+        \item Kann manuell implementiert werden
+        \item Initialisiert Felder mit default(T)
+        \item Konstruktor kann beliebig viele Felder initialisieren
+    \end{itemize}
+    \columnbreak
+    \fat{Struct}
+    \begin{itemize}
+        \item Immer automatisch generiert
+        \item Wird auch generiert, wenn anderer Konstruktor vorhanden
+        \item Kann nicht manuell definiert werden
+        \item Initialisiert Felder mit default(T)
+        \item Konstruktur muss alle Felder initialisieren
+    \end{itemize}
+\end{multicols*}
+
+\subsubsection{Statisch}
+Identisch bei Klasse / Struct
+\begin{itemize}
+    \item Zwingend parameterlos
+    \item Sichtbarkeit darf nicht angegeben werden
+    \item Nur ein statischer Konstruktor erlaubt
+    \item Wird genau einmal ausgeführt: Bei erster Instanzierung des Typen, Bei erstem Zugriff auf Statisches Feld des Typen
+    \item Kann nicht explizit aufgerufen werden
+\end{itemize}
+\begin{lstlisting}
+class MyClass {
+    static MyClass()
+    {
+        /* ... */
+    }
+}
+\end{lstlisting}
+\subsubsection{Private}
+Können nur intern verwendet werden. Es wird kein Default-Konstruktor erzeugt, wenn ein privater Konstruktor existiert
+\subsubsection{Destruktor}
+Ermöglichen Abschlussarbeiten beim Abbau eines Objekts.
+\begin{itemize}
+    \item Nur bei Klassen erlaubt, bei Structs verboten
+    \item Zwingend parameterlos / ohne Sichtbarkeit
+    \item Nur ein Destruktor erlaubt
+    \item Wird nur vom Garbage Collector aufgerufen
+    \item Destruktor der Basisklasse wird anschliessend ausgeführt
+\end{itemize}
+\begin{lstlisting}
+~MyClass() { }
+\end{lstlisting}
+
+\subsubsection{Initialisierungs-Reihenfolge}
+\fat{Ohne Vererbung:}
+\begin{lstlisting}
+class Base {
+    private static int _baseStaticValue = 0;
+    private int _baseValue = 0;
+    static Base() { }
+    public Base() { }
+}
+
+Base b1 = new Base();
+    // Base > baseStaticValue
+    // Base > Statischer Konstruktor 
+    // Base > baseValue
+    // Base > Konstruktor
+
+Base b2 = new Base();
+    // Base > baseValue 
+    // Base > Konstruktor
+\end{lstlisting}
+\fat{Mit Vererbung:}
+\begin{lstlisting}
+class Base {
+    private static int _baseStaticValue = 0;
+    private int _baseValue = 0;
+    static Base() { }
+    public Base() { }
+}
+
+class Sub : Base
+{
+private static int _subStaticValue = 0; private int _subValue = 0;
+static Sub() { }
+public Sub() { }
+}
+
+Sub s1 = new Sub();
+    // Sub > subStaticValue
+    // Sub > Statischer Konstruktor 
+    // Sub > subValue
+    // Base > baseStaticValue
+    // Base > Statischer Konstruktor 
+    // Base > baseValue
+    // Base > Konstruktor
+    // Sub > Konstruktor
+
+Sub s2 = new Sub();
+    // Sub > subValue
+    // Base > baseValue 
+    // Base > Konstruktor 
+    // Sub > Konstruktor
+\end{lstlisting}
+\includegraphics*[width=\columnwidth]{konstruktor}
+\includegraphics*[width=\columnwidth]{konstruktor2}
+
+\subsection{Operator Overloading}
+\begin{itemize}
+    \item Methode muss static sein
+    \item Rückgabetyp ist frei wählbar
+    \item Mindestens 1 Parameter muss vom Typ der enthaltenden Klasse sein
+    \item Muss teilweise als Paar überladen werden:
+    (==, !=), (<, >), (<=, >=), (true, false)
+\end{itemize}
+\begin{lstlisting}
+class Point {
+    private int _x, _y;
+    public Point(int _x, int _y){ _x = _x;_y = _y; }
+
+    public static Point operator ~(Point a) 
+    {
+        return new(a._x * -1, a._y * -1);
+    }
+
+    public static Point operator + (Point a, Point b)
+    {
+        return new(a._x + b._x, a._y + b._y);
+    } 
+}
+
+// OK
+public static int operator ~(Point a)
+// Compilerfehler
+public static Point operator ~(int a)
+// OK
+public static Point operator +(int a, Point b) 
+public static Point operator +(Point a, int b) 
+public static int operator +(Point a, Point b) 
+// Compilerfehler
+public static Point operator +(int a, int b)
+\end{lstlisting}
+
+\subsection{Partielle Klassen und Methoden}
+Funktioniert mit Klassen, Structs, Interfaces
+\begin{itemize}
+    \item partial muss bei allen Teilen angemerkt sein
+    \item Alle Teile müssen die gleichen Sichtbarkeitsattribute haben
+\end{itemize}
+\begin{lstlisting}
+// File1.cs
+partial class MyClass
+{
+    public void Test1() { }
+}
+// File2.cs
+partial class MyClass
+{
+    public void Test2() { }
+}
+\end{lstlisting}
+\end{multicols*}
